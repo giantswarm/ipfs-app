@@ -1,0 +1,79 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: ipfs-app
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: ipfs-app
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: ipfs-app
+  template:
+    metadata:
+      labels:
+        app: ipfs-app
+      annotations:
+        releaseRevision: {{ $.Release.Revision | quote }}
+    spec:
+      initContainers:
+      - name: create-ipfs-directories
+        image: {{ .Values.image.name }}:{{ .Values.image.tag }}
+        args:
+        - /bin/sh
+        - -c
+        - "mkdir -p /opt/ipfs/fuse/ipfs; mkdir -p /opt/ipfs/fuse/ipns; mkdir -p /opt/ipfs/config"
+        volumeMounts:
+        - name: ipfs-init
+          mountPath: /opt
+      - name: ipfs-init
+        image: {{ .Values.image.name }}:{{ .Values.image.tag }}
+        env:
+        - name: IPFS_PATH
+          value: /ipfs/config
+        args:
+        - /bin/sh
+        - -c
+        - 'if [ ! -f "${IPFS_PATH}/config" ]; then ipfs init; fi'
+        volumeMounts:
+        - name: ipfs
+          mountPath: /ipfs
+      containers:
+      - name: ipfs-app
+        image: {{ .Values.image.name }}:{{ .Values.image.tag }}
+        env:
+        - name: IPFS_PATH
+          value: /ipfs/config
+        args:
+        - /usr/local/bin/ipfs
+        - daemon
+        - --mount
+        - --enable-gc
+        - --mount-ipfs=/ipfs/fuse/ipfs
+        - --mount-ipns=/ipfs/fuse/ipns
+        volumeMounts:
+        - mountPath: /dev/fuse
+          name: dev-fuse
+        - name: ipfs
+          mountPath: /ipfs
+          mountPropagation: Bidirectional
+        securityContext:
+          privileged: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 300Mi
+      serviceAccountName: ipfs-app
+      volumes:
+      - name: ipfs
+        hostPath:
+          path: /opt/ipfs
+          type: Directory
+      - name: ipfs-init
+        hostPath:
+          path: /opt
+      - name: dev-fuse
+        hostPath:
+          path: /dev/fuse
