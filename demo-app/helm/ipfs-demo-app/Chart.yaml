@@ -1,0 +1,6 @@
+apiVersion: "v1"
+name: ipfs-demo-app
+description: "Helm chart to mount IPFS via fuse into Kubernetes hosts"
+home: "https://github.com/giantswarm/ipfs-app"
+version: 0.1.0
+appVersion: 0.1.0

@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      serviceAccount: {{ .Values.name }}
+      serviceAccountName: {{ .Values.name }}
+      containers:
+      - name: {{ .Values.name }}
+        image: caddy
+        ports:
+        - containerPort: {{ .Values.port }}
+        args:
+        - caddy
+        - file-server 
+        - --root=/site 
+        - --listen
+        - :{{ .Values.port }}
+        volumeMounts:
+          - name: fuse-mount
+            mountPath: /site/index.html
+            subPath: {{ .Values.cid }}
+      volumes:
+      - name: fuse-mount
+        hostPath:
+          path: /opt/ipfs/fuse/ipfs
+          type: Directory
