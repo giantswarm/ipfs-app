@@ -1,4 +1,4 @@
 name: ipfs-demo-app
 cid: QmYCd25oPx1b2y3arBW53sDXcDAB4YwaTxRnjUZnMhcLKZ
 port: 8080
-fqdn: <put your fqdn here>
+fqdn: ipfs-demo-app.vzmp7.k8s.gorilla.eu-central-1.aws.gigantic.io
